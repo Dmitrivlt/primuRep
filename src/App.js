@@ -11,7 +11,7 @@ function App() {
   return (
     <div className="App">
       <ClassCounter />
-      <h1> iiiiiiiiiii 4</h1>
+      <h1> heilalalei </h1>
     </div >
   );
 }
