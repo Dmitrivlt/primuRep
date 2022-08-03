@@ -8,6 +8,7 @@ import MyButton from './components/UI/button/MyButton';
 import './styles/App.css';
 import MyInput from './components/UI/input/MyInput'
 import PostForm from './components/PostForm';
+import MySelect from './components/UI/select/MySelect';
 
 function App() {
   const [posts, setPosts] = useState([
@@ -22,6 +23,8 @@ function App() {
   // //   { id: 3, title: 'Dream-work', body: 'Pizdets si tare vreu' }
 
   // ])
+  const [selectedSort, setSelectedSort] = useState('')
+
   const createPost = (newPost) => {
     setPosts([...posts, newPost])
   }
@@ -30,10 +33,30 @@ function App() {
     setPosts(posts.filter(p => p.id !== post.id))
   }
 
+  const sortPosts = (sort) => {
+    setSelectedSort(sort);
+    console.log(sort)
+  }
 
   return (
     <div className="App">
       <PostForm create={createPost} />
+      <hr style={{ margin: '15px 0' }} />
+      <div style={{ textAlign: 'right' }}>
+        <MySelect
+          value={selectedSort}
+          onChange={sortPosts}
+          defaultValue="Сортировка"
+          options={[
+            { value: 'title', name: 'По названию' },
+            { value: 'body', name: 'По описанию' },
+          ]}
+        />
+
+      </div>
+
+
+
       {posts.length !== 0
         ?
         <PostList remove={removePost} posts={posts} title="Посты про Front-End" />
