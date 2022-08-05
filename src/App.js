@@ -1,5 +1,5 @@
 import { getByTitle } from '@testing-library/react';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PostItem from './components/PostItem';
 import PostList from './components/PostList';
 import MyButton from './components/UI/button/MyButton';
@@ -9,6 +9,8 @@ import './styles/App.css';
 import MyInput from './components/UI/input/MyInput'
 import PostForm from './components/PostForm';
 import MySelect from './components/UI/select/MySelect';
+import PostFilter from './components/UI/PostFilter';
+import MyModal from './components/UI/MyModal/MyModal';
 
 function App() {
   const [posts, setPosts] = useState([
@@ -23,9 +25,26 @@ function App() {
   // //   { id: 3, title: 'Dream-work', body: 'Pizdets si tare vreu' }
 
   // ])
-  const [selectedSort, setSelectedSort] = useState('')
+
+  const [filter, setFilter] = useState({ sort: '', query: '' })
+
+
+
+  const sortedPosts = useMemo(() => {
+    console.log('Отработала функция sorded posts !')
+    if (filter.sort) {
+      return [...posts].sort((a, b) => a[filter.sort].localeCompare(b[filter.sort]))
+    }
+    return posts;
+
+  }, [filter.sort, posts])
+
+  const sortedAndSearchedPosts = useMemo(() => {
+    return sortedPosts.filter(post => post.title.toLowerCase().includes(filter.query.toLowerCase()))
+  }, [filter.query, sortedPosts])
 
   const createPost = (newPost) => {
+    console.log(createPost)
     setPosts([...posts, newPost])
   }
   // Получаем post из дочернего компонента
@@ -33,37 +52,21 @@ function App() {
     setPosts(posts.filter(p => p.id !== post.id))
   }
 
-  const sortPosts = (sort) => {
-    setSelectedSort(sort);
-    console.log(sort)
-  }
-
   return (
+
     <div className="App">
-      <PostForm create={createPost} />
-      <hr style={{ margin: '15px 0' }} />
-      <div style={{ textAlign: 'right' }}>
-        <MySelect
-          value={selectedSort}
-          onChange={sortPosts}
-          defaultValue="Сортировка"
-          options={[
-            { value: 'title', name: 'По названию' },
-            { value: 'body', name: 'По описанию' },
-          ]}
+      <MyModal>
+        <PostForm create={createPost}
         />
+      </MyModal>
 
-      </div>
+      <hr style={{ margin: '15px 0' }} />
+      <PostFilter
+        filter={filter}
+        setFilter={setFilter}
+      />
 
-
-
-      {posts.length !== 0
-        ?
-        <PostList remove={removePost} posts={posts} title="Посты про Front-End" />
-        :
-        <h1 style={{ textAlign: 'center' }}
-        > Данный пост не был найден ! </h1>
-      }
+      <PostList remove={removePost} posts={sortedAndSearchedPosts} title="Посты про Front-End" />
       {/* <PostList posts={posts2} title="Посты про Back-End " /> */}
     </div >
   );
