@@ -11,42 +11,44 @@ import PostForm from './components/PostForm';
 import MySelect from './components/UI/select/MySelect';
 import PostFilter from './components/UI/PostFilter';
 import MyModal from './components/UI/MyModal/MyModal';
+import { usePosts } from './hooks/usePosts';
+import axios from 'axios';
+import PostService from './API/PostService';
+import Loader from './components/UI/Loader/Loader';
+import { useFetching } from './hooks/useFetching';
+import { getPageCount } from './utils/pages';
 
 function App() {
-  const [posts, setPosts] = useState([
-    { id: 1, title: 'Javascript', body: 'Invatam' },
-    { id: 2, title: 'React', body: 'Acum la moment' },
-    { id: 3, title: 'Front-end', body: 'In process' },
+  const [posts, setPosts] = useState([]);
+  const [filter, setFilter] = useState({ sort: '', query: '' });
+  const [modal, setModal] = useState(false);
+  const [totalPages, setTotalPages] = useState(0);
+  const [limit, setLimit] = useState(10);
+  const [page, setPage] = useState(1);
+  const sortedAndSearchedPosts = usePosts(posts, filter.sort, filter.query);
+  let pagesArray = []
+  for (let i = 0; i < totalPages; i++) {
+    pagesArray.push(i + 1);
 
-  ])
-  // // const [posts2, setPost2] = useState([
-  // //   { id: 1, title: 'Back-end', body: 'In asteptare' },
-  // //   { id: 2, title: 'Phyton', body: 'In asteptare' },
-  // //   { id: 3, title: 'Dream-work', body: 'Pizdets si tare vreu' }
+  }
+  console.log(pagesArray)
+  const [fetchPosts, isPostLoading, postError] = useFetching(async () => {
+    const response = await PostService.getAll(limit, page);
+    setPosts(response.data)
+    const totalCount = response.headers['x-total-count']
+    setTotalPages(getPageCount(totalCount, limit));
 
-  // ])
+  })
 
-  const [filter, setFilter] = useState({ sort: '', query: '' })
-  const [modal, setModal] = useState(false)
-
-
-  const sortedPosts = useMemo(() => {
-    console.log('Отработала функция sorded posts !')
-    if (filter.sort) {
-      return [...posts].sort((a, b) => a[filter.sort].localeCompare(b[filter.sort]))
-    }
-    return posts;
-
-  }, [filter.sort, posts])
-
-  const sortedAndSearchedPosts = useMemo(() => {
-    return sortedPosts.filter(post => post.title.toLowerCase().includes(filter.query.toLowerCase()))
-  }, [filter.query, sortedPosts])
+  useEffect(() => {
+    fetchPosts()
+  }, [])
 
   const createPost = (newPost) => {
     setPosts([...posts, newPost])
     setModal(false)
   }
+
   // Получаем post из дочернего компонента
   const removePost = (post) => {
     setPosts(posts.filter(p => p.id !== post.id))
@@ -55,6 +57,7 @@ function App() {
   return (
 
     <div className="App">
+      {/* <button onClick={fetchPosts} > GET POSTS </button> */}
       <MyButton style={{ marginTop: 30 }} onClick={() => setModal(true)} >
         Создать пользователя
       </MyButton>
@@ -68,8 +71,14 @@ function App() {
         filter={filter}
         setFilter={setFilter}
       />
+      {postError &&
+        <h1> Произошла ошибка ${postError}</h1>
+      }
+      {isPostLoading
+        ? <div style={{ display: 'flex', justifyContent: 'center', marginTop: 50 }}> <Loader /> </div>
+        : <PostList remove={removePost} posts={sortedAndSearchedPosts} title="Посты про Front-End" />
+      }
 
-      <PostList remove={removePost} posts={sortedAndSearchedPosts} title="Посты про Front-End" />
       {/* <PostList posts={posts2} title="Посты про Back-End " /> */}
     </div >
   );
